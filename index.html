@@ -1,93 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Premier League FPL Fixture Ticker</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>FPL Live Fixture Ticker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; background: #F7F7F9; color: #222; margin: 0; padding: 2rem;}
-    h2 { text-align: center; }
-    .container { max-width: 1100px; margin: auto;}
-    .slider-container { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
-    .ticker-table { width: 100%; border-collapse: collapse; margin-top: 1rem;}
-    .ticker-table th, .ticker-table td { padding: 8px; text-align: center;}
-    .team-name { font-weight: bold; text-align: left;}
-    .easy { background: #bbf2b9;}
-    .medium { background: #ffe796;}
-    .hard { background: #ffbaba;}
-    .gw-th { font-size: 0.9em; font-weight: normal;}
-    @media (max-width:700px) {
-      .ticker-table th, .ticker-table td { font-size: 0.84em; }
-      .container { padding: 0;}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f9;
+      color: #222;
+      margin: 0;
+      padding: 2rem;
+    }
+    h2 {
+      text-align: center;
+    }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+    .ticker-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    .ticker-table th,
+    .ticker-table td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    .team-name {
+      font-weight: bold;
+      text-align: left;
+      padding-left: 10px;
+      background: #fafafa;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      min-width: 120px;
+    }
+    .easy {
+      background: #bbf2b9;
+    }
+    .medium {
+      background: #ffe796;
+    }
+    .hard {
+      background: #ffbaba;
+    }
+    .gw-th {
+      font-size: 0.9em;
+      font-weight: normal;
+    }
+    @media (max-width: 700px) {
+      .ticker-table th,
+      .ticker-table td {
+        font-size: 0.84em;
+        padding: 6px;
+      }
+      .container {
+        padding: 0;
+      }
+      .team-name {
+        min-width: 90px;
+      }
+    }
+    .loading {
+      text-align: center;
+      margin-top: 4rem;
+      font-style: italic;
+      color: #666;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Premier League Fixture Ticker (FPL)</h2>
+    <h2>FPL Live Fixture Ticker (Dynamic)</h2>
     <div class="slider-container">
       <label for="gwRange">Show Gameweeks:</label>
-      <input type="range" id="gwRange" min="3" max="10" value="6" oninput="updateGWLabel(this.value)">
+      <input
+        type="range"
+        id="gwRange"
+        min="3"
+        max="10"
+        value="6"
+        oninput="updateGWLabel(this.value)"
+      />
       <span id="gwLabel">1–6</span>
     </div>
-    <table class="ticker-table" id="fixtureTable">
-      <!-- Dynamically filled -->
+    <div id="loading" class="loading">Loading fixtures...</div>
+    <table class="ticker-table" id="fixtureTable" style="display:none;">
+      <!-- Filled dynamically -->
     </table>
   </div>
-  <script>
-    const teams = [
-      { name: "Liverpool", fixtures: [
-        { opp: 'BHA', diff: 2 }, { opp: 'BUR', diff: 3 }, { opp: 'MCI', diff: 4 }, { opp: 'FUL', diff: 3 }, { opp: 'BRE', diff: 2 }, { opp: 'TOT', diff: 3 }, { opp: 'ARS', diff: 4 }, { opp: 'EVE', diff: 2 }, { opp: 'WHU', diff: 3 }, { opp: 'BOU', diff: 2 }
-      ]},
-      { name: "Man City", fixtures: [
-        { opp: 'EVE', diff: 3 }, { opp: 'CRY', diff: 2 }, { opp: 'LIV', diff: 4 }, { opp: 'NEW', diff: 3 }, { opp: 'AVL', diff: 2 }, { opp: 'MUN', diff: 4 }, { opp: 'CHE', diff: 3 }, { opp: 'SOU', diff: 2 }, { opp: 'TOT', diff: 3 }, { opp: 'ARS', diff: 4 }
-      ]},
-      { name: "Arsenal", fixtures: [
-        { opp: 'AVL', diff: 4 }, { opp: 'BOU', diff: 3 }, { opp: 'NFO', diff: 2 }, { opp: 'CHE', diff: 3 }, { opp: 'MUN', diff: 4 }, { opp: 'FUL', diff: 2 }, { opp: 'LIV', diff: 3 }, { opp: 'WHU', diff: 4 }, { opp: 'BRE', diff: 2 }, { opp: 'CRY', diff: 3 }
-      ]},
-      { name: "Chelsea", fixtures: [
-        { opp: 'NEW', diff: 3 }, { opp: 'BUR', diff: 2 }, { opp: 'SOU', diff: 3 }, { opp: 'WHU', diff: 3 }, { opp: 'EVE', diff: 3 }, { opp: 'NFO', diff: 3 }, { opp: 'BOU', diff: 2 }, { opp: 'TOT', diff: 3 }, { opp: 'FUL', diff: 2 }, { opp: 'AVL', diff: 3 }
-      ]},
-      { name: "Tottenham", fixtures: [
-        { opp: 'FUL', diff: 2 }, { opp: 'AVL', diff: 4 }, { opp: 'NFO', diff: 3 }, { opp: 'MUN', diff: 3 }, { opp: 'CRY', diff: 2 }, { opp: 'BOU', diff: 3 }, { opp: 'MCI', diff: 4 }, { opp: 'SOU', diff: 2 }, { opp: 'NEW', diff: 3 }, { opp: 'CHE', diff: 3 }
-      ]},
-      { name: "Aston Villa", fixtures: [
-        { opp: 'ARS', diff: 3 }, { opp: 'BOU', diff: 2 }, { opp: 'WHU', diff: 2 }, { opp: 'CHE', diff: 3 }, { opp: 'MCI', diff: 4 }, { opp: 'EVE', diff: 2 }, { opp: 'NFO', diff: 3 }, { opp: 'CRY', diff: 2 }, { opp: 'MUN', diff: 3 }, { opp: 'BRE', diff: 4 }
-      ]}
-    ];
 
+  <script>
+    const apiUrl = 'https://fantasy.premierleague.com/api/fixtures/';
+    const apiTeamsUrl = 'https://fantasy.premierleague.com/api/bootstrap-static/';
+
+    let fixtures = [];
+    let teams = [];
+    let gwCount = 6;
+
+    // Difficulty to color class
     function diffClass(diff) {
       if (diff <= 2) return 'easy';
       if (diff === 3) return 'medium';
       return 'hard';
     }
 
-    let gwCount = 6;
+    // Update label and re-render table
     function updateGWLabel(val) {
       gwCount = +val;
       document.getElementById('gwLabel').textContent = '1–' + val;
       renderTable();
     }
 
-    function renderTable() {
-      let html = `<tr><th>Team</th>`;
-      for (let gw = 1; gw <= gwCount; gw++) {
-        html += `<th>GW${gw}<span class='gw-th'></span></th>`;
-      }
-      html += `</tr>`;
-
-      for (let team of teams) {
-        html += `<tr><td class='team-name'>${team.name}</td>`;
-        for (let i = 0; i < gwCount; i++) {
-          let f = team.fixtures[i];
-          html += `<td class="${diffClass(f.diff)}">${f.opp}<br><small>(${f.diff})</small></td>`;
-        }
-        html += '</tr>';
-      }
-      document.getElementById('fixtureTable').innerHTML = html;
+    // Get full team info by id
+    function getTeamNameById(id) {
+      const team = teams.find((t) => t.id === id);
+      return team ? team.name : '?';
     }
 
-    renderTable();
-  </script>
-</body>
-</html>
+    // Process fixture data: group by team id, sorted by kickoff time
+    function groupFixturesByTeam(fixtures) {
+      const byTeam = {};
+
+      // initialize empty arrays for each team
+      teams.forEach((team) => {
+        byTeam[team.id] = [];
+      });
+
+      for (const f of fixtures) {
+        // add fixture for both home and away teams
+        byTeam[f.team_h].push({
+          opponent: getTeamNameById(f.team_a),
+          difficulty: f.difficulty_h,
+          event: f.event, // gameweek
+          is_home: true,
+          kickoff: f.kickoff_time,
+        });
+        byTeam[f.team_a].push({
+          opponent: getTeamNameById(f.team_h),
+          difficulty: f.difficulty_a,
+          event: f.event,
+          is_home: false,
+          kickoff
